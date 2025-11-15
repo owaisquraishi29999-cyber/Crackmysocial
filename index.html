@@ -6,7 +6,262 @@
     <title>Elite Social Media Services | Portfolio</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Use Inter font -->
+    <!-- Load Phosphor Icons (for stars) -->
+    <script src="https://unpkg.com/phosphor-icons"></script>
+    
+    <!-- Firebase Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, query, orderBy, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Set Firebase Log Level
+        setLogLevel('Debug');
+
+        // Global Variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth, userId;
+        let isAuthReady = false;
+
+        const initialReviews = [
+            { name: "Jake S.", rating: 5, reviewText: "Owais is a wizard! My account was locked for weeks, and he got it recovered within 24 hours. Professional and highly recommended. Thank you for recovering my account!", createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 30)) },
+            { name: "Maria L.", rating: 5, reviewText: "I've tried other closers, but the conversion rate with Owais is unmatched. Our high-ticket offer saw a 30% increase in closed sales last month. Stellar service!", createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 15)) },
+            { name: "Apex Agency", rating: 4, reviewText: "Crack My Social helped streamline our lead qualification process. The team is dedicated, and their troubleshooting support is top-notch. Great random service thank yous!", createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 7)) },
+            { name: "K. Al-Mansoori", rating: 5, reviewText: "Excellent foundational social media support. Everything runs smoothly now, and the peace of mind is worth the cost.", createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 2)) }
+        ];
+
+        /**
+         * Returns the correct Firestore collection reference for public data.
+         * @returns {object} Firestore Collection Reference
+         */
+        function getReviewsCollection() {
+            // Public collection path: /artifacts/{appId}/public/data/reviews
+            return collection(db, 'artifacts', appId, 'public', 'data', 'reviews');
+        }
+        
+        /**
+         * Adds initial mock reviews if the collection is empty.
+         */
+        async function addInitialReviews() {
+            try {
+                const reviewsCol = getReviewsCollection();
+                // Check if the collection is empty by fetching a limited number of documents
+                const snapshot = await getDocs(query(reviewsCol));
+                
+                if (snapshot.empty) {
+                    console.log("Reviews collection is empty. Seeding initial data...");
+                    for (const review of initialReviews) {
+                        await addDoc(reviewsCol, review);
+                    }
+                    console.log("Initial reviews seeded successfully.");
+                } else {
+                    console.log("Reviews collection already contains data. Skipping seeding.");
+                }
+            } catch (error) {
+                console.error("Error seeding initial reviews:", error);
+            }
+        }
+
+        /**
+         * Sets up a real-time listener for the reviews collection.
+         */
+        function setupReviewListener() {
+            if (!db || !isAuthReady) {
+                console.error("Firestore not ready or authenticated.");
+                return;
+            }
+            
+            const reviewsCol = getReviewsCollection();
+            // Query to order by creation date descending
+            const q = query(reviewsCol, orderBy('createdAt', 'desc'));
+            const reviewsContainer = document.getElementById('reviews-container');
+            
+            // Listen for real-time updates
+            onSnapshot(q, (snapshot) => {
+                const reviews = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    // Ensure the rating is between 1 and 5
+                    const rating = Math.min(5, Math.max(1, data.rating || 5)); 
+                    reviews.push({ id: doc.id, ...data, rating: rating });
+                });
+                
+                // Clear and render all reviews (fulfills the real-time update requirement)
+                reviewsContainer.innerHTML = ''; 
+                if (reviews.length === 0) {
+                    reviewsContainer.innerHTML = '<p class="text-gray-500 text-center py-6">No reviews yet. Be the first to leave a vouch!</p>';
+                } else {
+                    reviews.forEach(review => {
+                        reviewsContainer.appendChild(createReviewCard(review));
+                    });
+                }
+                
+                // Run seeding check *after* the initial snapshot is received
+                addInitialReviews();
+
+            }, (error) => {
+                console.error("Error listening to reviews:", error);
+                document.getElementById('reviews-error').textContent = `Failed to load reviews: ${error.message}`;
+            });
+        }
+        
+        /**
+         * Initializes Firebase and authenticates the user.
+         */
+        async function initializeFirebase() {
+            if (!firebaseConfig) {
+                console.error("Firebase config is missing. Cannot initialize Firestore.");
+                document.getElementById('reviews-error').textContent = "Database connection failed: Configuration missing.";
+                return;
+            }
+
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    console.log("Signed in with custom token.");
+                } else {
+                    await signInAnonymously(auth);
+                    console.log("Signed in anonymously.");
+                }
+            } catch (error) {
+                console.error("Firebase authentication failed:", error);
+                document.getElementById('reviews-error').textContent = `Authentication failed: ${error.message}`;
+                return;
+            }
+
+            // Set userId and flag authentication as complete
+            userId = auth.currentUser?.uid || crypto.randomUUID();
+            isAuthReady = true;
+
+            // Start listening for reviews immediately after auth
+            setupReviewListener();
+        }
+
+        /**
+         * Creates the visual HTML card for a single review.
+         * @param {object} review - The review data object.
+         * @returns {HTMLElement} The review card div element.
+         */
+        function createReviewCard(review) {
+            const card = document.createElement('div');
+            card.className = 'bg-gray-800 p-6 rounded-xl border border-gray-700/50 shadow-lg';
+            
+            // Star rating display
+            const starsHtml = Array(5).fill(0).map((_, i) => 
+                i < review.rating ? 
+                '<i class="ph-fill ph-star text-yellow-400"></i>' : 
+                '<i class="ph-bold ph-star text-gray-600"></i>'
+            ).join('');
+
+            // Format date if available
+            let dateText = '';
+            // Check if createdAt exists and is a Timestamp object (or can be converted)
+            if (review.createdAt && typeof review.createdAt.toDate === 'function') {
+                dateText = review.createdAt.toDate().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            } else if (review.createdAt) {
+                 // Fallback for non-Timestamp dates if needed
+                dateText = new Date(review.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-lg font-semibold text-red-400">${review.name || 'Anonymous User'}</div>
+                    <div class="flex space-x-0.5 text-lg">${starsHtml}</div>
+                </div>
+                <p class="text-gray-300 italic mb-4">"${review.reviewText}"</p>
+                <div class="text-sm text-gray-500 text-right">${dateText}</div>
+            `;
+            return card;
+        }
+
+        /**
+         * Handles the submission of the review form.
+         * @param {Event} e - The form submission event.
+         */
+        async function handleReviewSubmit(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('reviewerName').value.trim() || 'Anonymous Client';
+            const rating = parseInt(document.querySelector('input[name="rating"]:checked')?.value, 10);
+            const reviewText = document.getElementById('reviewText').value.trim();
+            const submitButton = document.getElementById('submitReviewBtn');
+            const messageElement = document.getElementById('reviewMessage');
+
+            // Basic validation
+            if (!rating || !reviewText) {
+                messageElement.textContent = "Please provide both a rating and a review.";
+                messageElement.className = "text-yellow-400 mt-3";
+                return;
+            }
+            if (reviewText.length < 10) {
+                 messageElement.textContent = "Review must be at least 10 characters long.";
+                messageElement.className = "text-yellow-400 mt-3";
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+            messageElement.textContent = '';
+            messageElement.className = "";
+
+            try {
+                const newReview = {
+                    name: name,
+                    rating: rating,
+                    reviewText: reviewText,
+                    createdAt: Timestamp.now(),
+                    userId: userId, // User ID who submitted the review
+                };
+
+                await addDoc(getReviewsCollection(), newReview);
+                
+                messageElement.textContent = "Review submitted successfully! Thank you for your feedback.";
+                messageElement.className = "text-green-500 mt-3";
+                // Clear the form fields
+                document.getElementById('reviewForm').reset();
+                document.getElementById('star5').checked = true; // Reset star rating
+
+            } catch (error) {
+                console.error("Error submitting review:", error);
+                messageElement.textContent = `Error submitting review: ${error.message}`;
+                messageElement.className = "text-red-500 mt-3";
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Vouch';
+            }
+        }
+
+        // Initialize Firebase when the script loads
+        document.addEventListener('DOMContentLoaded', () => {
+             // Initial placeholder for reviews
+            document.getElementById('reviews-container').innerHTML = '<p class="text-gray-500 text-center py-6">Connecting to database...</p>';
+            initializeFirebase();
+            
+            // Attach event listener to the form
+            const form = document.getElementById('reviewForm');
+            if (form) {
+                form.addEventListener('submit', handleReviewSubmit);
+            }
+        });
+    </script>
+    
+    <!-- Use Inter font and custom styles -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
@@ -27,30 +282,53 @@
             box-shadow: 0 10px 40px rgba(239, 68, 68, 0.6), 0 0 10px rgba(239, 68, 68, 0.2); /* Red glow */
             transition: all 0.5s ease;
         }
+        /* Hidden radio button styles for stars */
+        .star-rating input[type="radio"] {
+            display: none;
+        }
+        .star-rating label {
+            cursor: pointer;
+            padding: 0 2px;
+            font-size: 1.8rem;
+            color: #4b5563; /* Gray star outline */
+            transition: color 0.2s;
+        }
+        /* Star hover and checked styles */
+        .star-rating input[type="radio"]:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #f59e0b; /* Yellow star fill */
+        }
+        /* Fix to make sure selection stays on click */
+        .star-rating input[type="radio"]:checked + label {
+            color: #f59e0b;
+        }
+        /* Reverse order for CSS magic, but reorder visually using flex */
+        .star-rating {
+            direction: rtl;
+            display: flex;
+            justify-content: flex-start;
+        }
     </style>
 </head>
 <body class="text-gray-100 min-h-screen">
     <!-- Main Container -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
 
-        <!-- Header & Main Pitch Section (Redesigned) -->
+        <!-- Header & Main Pitch Section -->
         <header class="text-center mb-16 md:mb-24">
-            <!-- New Site Name/Brand -->
             <h2 class="text-2xl sm:text-3xl font-bold text-red-500 mb-2">Crack My Social</h2>
-
-            <!-- Main Pitch is now the primary headline, enhanced for impact -->
             <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold leading-tight text-white mb-6">
                 I Convert Your Influence into <span class="text-red-500">Verifiable Revenue.</span>
             </h1>
-            <!-- Secondary strategic title moved up -->
             <p class="text-xl sm:text-2xl font-semibold text-gray-400 mb-6 max-w-3xl mx-auto">
                 Social Media Services & High-Ticket Sales Strategist, Est. 2021
             </p>
             <p class="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto">
                 My work is driven by **unmatched passion** and a commitment to measurable results, leveraging deep social media expertise to scale your high-ticket offers.
             </p>
-            <a href="#contact" class="inline-block mt-10 px-8 py-4 text-lg font-bold bg-red-600 rounded-lg text-white cta-button hover:bg-red-700">
-                Book a 15-Minute Partnership Assessment
+            <a href="#testimonials" class="inline-block mt-10 px-8 py-4 text-lg font-bold bg-red-600 rounded-lg text-white cta-button hover:bg-red-700">
+                See Client Testimonials
             </a>
         </header>
 
@@ -96,6 +374,54 @@
             </div>
         </section>
 
+        <!-- Testimonials / Vouches Section -->
+        <section id="testimonials" class="mb-16 md:mb-24">
+            <h2 class="text-center text-3xl sm:text-4xl font-bold text-white mb-4">Client Vouches & Testimonials</h2>
+            <p class="text-center text-lg text-gray-400 mb-10 max-w-2xl mx-auto">
+                Don't just take my word for it. Real results from real clients who trust me to scale their social revenue.
+            </p>
+            
+            <div id="reviews-error" class="text-red-500 text-center text-lg hidden"></div>
+
+            <!-- Reviews Display Area (Populated by JS/Firestore) -->
+            <div id="reviews-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Reviews will be injected here -->
+            </div>
+
+            <!-- Review Submission Form -->
+            <div class="mt-16 bg-gray-900 p-8 sm:p-10 rounded-xl border-2 border-red-500/50 shadow-xl max-w-3xl mx-auto">
+                <h3 class="text-2xl font-bold text-red-400 mb-6 text-center">Leave a Vouch</h3>
+                <form id="reviewForm">
+                    <div class="mb-6">
+                        <label for="reviewerName" class="block text-sm font-medium text-gray-400 mb-2">Your Name (Optional)</label>
+                        <input type="text" id="reviewerName" class="w-full p-3 rounded-lg bg-[#161b22] border border-gray-700 focus:border-red-500 focus:ring-red-500 text-white" placeholder="Client Name or Company">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Your Rating</label>
+                        <div class="star-rating">
+                            <!-- Note: The labels are in reverse order for CSS styling magic -->
+                            <input type="radio" id="star5" name="rating" value="5" required checked><label for="star5" title="5 stars"><i class="ph-fill ph-star"></i></label>
+                            <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars"><i class="ph-fill ph-star"></i></label>
+                            <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars"><i class="ph-fill ph-star"></i></label>
+                            <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars"><i class="ph-fill ph-star"></i></label>
+                            <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star"><i class="ph-fill ph-star"></i></label>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="reviewText" class="block text-sm font-medium text-gray-400 mb-2">Your Review/Vouch</label>
+                        <textarea id="reviewText" rows="4" required class="w-full p-3 rounded-lg bg-[#161b22] border border-gray-700 focus:border-red-500 focus:ring-red-500 text-white" placeholder="Write a few lines about your experience working together..."></textarea>
+                    </div>
+
+                    <button type="submit" id="submitReviewBtn" class="w-full py-3 text-lg font-bold bg-red-600 rounded-lg text-white cta-button hover:bg-red-700">
+                        Submit Vouch
+                    </button>
+                    <p id="reviewMessage" class="text-center mt-3"></p>
+                </form>
+            </div>
+        </section>
+
         <!-- Contact/CTA Footer Section -->
         <section id="contact" class="text-center bg-gray-900 p-10 sm:p-16 rounded-xl border-2 border-red-500" id="contact-standout">
             <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to Scale Your Revenue?</h2>
@@ -119,4 +445,5 @@
     </div>
 </body>
 </html>
+
 
