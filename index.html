@@ -3,446 +3,455 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite Social Media Services | Portfolio</title>
-    <!-- Load Tailwind CSS -->
+    <title>Crack My Social - Convert Influence into Revenue</title>
+    <!-- Load Tailwind CSS for utility-first styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Phosphor Icons (for stars) -->
-    <script src="https://unpkg.com/phosphor-icons"></script>
+    <!-- Load Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
     
-    <!-- Firebase Imports -->
+    <style>
+        /* Base Dark Theme Styling to match the screenshots */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Very Dark Background */
+            color: #c9d1d9; /* Light gray text */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 0;
+        }
+        .main-container {
+            max-width: 768px; /* Mobile-first design */
+            width: 95%;
+            margin: auto;
+            padding-top: 20px;
+            padding-bottom: 50px;
+        }
+        .card {
+            background-color: #161b22; /* Slightly lighter dark background for cards */
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        .card-header-red {
+            color: #ff4757; /* Bright Red Accent */
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        /* Style for Step Headings (1. Deep Discovery, etc.) */
+        .step-heading {
+            color: #ff4757;
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* font-extrabold */
+            margin-bottom: 8px;
+        }
+
+        /* Custom styling for the rating stars (Vouch System) */
+        .rating-stars {
+            unicode-bidi: bidi-override;
+            direction: rtl;
+            text-align: center;
+            font-size: 2.5rem;
+            color: #888;
+            padding: 10px 0;
+            display: inline-block;
+        }
+        .rating-stars > span {
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .rating-stars > span:hover:before,
+        .rating-stars > span:hover ~ span:before,
+        .rating-stars > span.active:before,
+        .rating-stars > span.active ~ span:before {
+            content: "\2605"; /* Solid star */
+            position: absolute;
+            color: #fca311; /* Gold color */
+        }
+        .rating-stars > span:before {
+            content: "\2606"; /* Outline star */
+            position: absolute;
+        }
+        
+        /* Custom scrollbar for reviews list */
+        .reviews-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .reviews-list::-webkit-scrollbar-thumb {
+            background-color: #30363d;
+            border-radius: 3px;
+        }
+        
+        /* Utility to use in conjunction with Tailwind's prose */
+        .highlight-bold strong {
+            color: #ff4757; /* Red highlights */
+        }
+    </style>
+
+    <!-- FIREBASE SDK & APPLICATION LOGIC (VOUCH SYSTEM) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, query, orderBy, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Set Firebase Log Level
+        // Enable debug logging for robust error tracking
         setLogLevel('Debug');
-
-        // Global Variables
+        
+        // --- GLOBAL VARIABLES & ENVIRONMENT SETUP ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        let db, auth, userId;
-        let isAuthReady = false;
+        let db = null;
+        let auth = null;
+        let userId = null;
+        let selectedRating = 0; 
 
-        const initialReviews = [
-            { name: "Jake S.", rating: 5, reviewText: "Owais is a wizard! My account was locked for weeks, and he got it recovered within 24 hours. Professional and highly recommended. Thank you for recovering my account!", createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 30)) },
-            { name: "Maria L.", rating: 5, reviewText: "I've tried other closers, but the conversion rate with Owais is unmatched. Our high-ticket offer saw a 30% increase in closed sales last month. Stellar service!", createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 15)) },
-            { name: "Apex Agency", rating: 4, reviewText: "Crack My Social helped streamline our lead qualification process. The team is dedicated, and their troubleshooting support is top-notch. Great random service thank yous!", createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 7)) },
-            { name: "K. Al-Mansoori", rating: 5, reviewText: "Excellent foundational social media support. Everything runs smoothly now, and the peace of mind is worth the cost.", createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 2)) }
-        ];
+        // DOM Element References
+        const vouchesForm = document.getElementById('vouches-form');
+        const reviewsContainer = document.getElementById('reviews-container');
+        const submitButton = document.getElementById('submit-vouch-btn');
+        const statusMessage = document.getElementById('status-message');
+        const ratingSpans = document.querySelectorAll('.rating-stars span');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const reviewsLoading = document.getElementById('reviews-loading');
 
-        /**
-         * Returns the correct Firestore collection reference for public data.
-         * @returns {object} Firestore Collection Reference
-         */
-        function getReviewsCollection() {
-            // Public collection path: /artifacts/{appId}/public/data/reviews
-            return collection(db, 'artifacts', appId, 'public', 'data', 'reviews');
-        }
-        
-        /**
-         * Adds initial mock reviews if the collection is empty.
-         */
-        async function addInitialReviews() {
-            try {
-                const reviewsCol = getReviewsCollection();
-                // Check if the collection is empty by fetching a limited number of documents
-                const snapshot = await getDocs(query(reviewsCol));
-                
-                if (snapshot.empty) {
-                    console.log("Reviews collection is empty. Seeding initial data...");
-                    for (const review of initialReviews) {
-                        await addDoc(reviewsCol, review);
-                    }
-                    console.log("Initial reviews seeded successfully.");
-                } else {
-                    console.log("Reviews collection already contains data. Skipping seeding.");
-                }
-            } catch (error) {
-                console.error("Error seeding initial reviews:", error);
-            }
+        function showStatus(message, isError = false) {
+            statusMessage.textContent = message;
+            statusMessage.className = isError 
+                ? 'text-red-400 mt-2 text-sm text-center' 
+                : 'text-green-400 mt-2 text-sm text-center';
         }
 
-        /**
-         * Sets up a real-time listener for the reviews collection.
-         */
-        function setupReviewListener() {
-            if (!db || !isAuthReady) {
-                console.error("Firestore not ready or authenticated.");
-                return;
-            }
-            
-            const reviewsCol = getReviewsCollection();
-            // Query to order by creation date descending
-            const q = query(reviewsCol, orderBy('createdAt', 'desc'));
-            const reviewsContainer = document.getElementById('reviews-container');
-            
-            // Listen for real-time updates
-            onSnapshot(q, (snapshot) => {
-                const reviews = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    // Ensure the rating is between 1 and 5
-                    const rating = Math.min(5, Math.max(1, data.rating || 5)); 
-                    reviews.push({ id: doc.id, ...data, rating: rating });
-                });
-                
-                // Clear and render all reviews (fulfills the real-time update requirement)
-                reviewsContainer.innerHTML = ''; 
-                if (reviews.length === 0) {
-                    reviewsContainer.innerHTML = '<p class="text-gray-500 text-center py-6">No reviews yet. Be the first to leave a vouch!</p>';
-                } else {
-                    reviews.forEach(review => {
-                        reviewsContainer.appendChild(createReviewCard(review));
-                    });
-                }
-                
-                // Run seeding check *after* the initial snapshot is received
-                addInitialReviews();
-
-            }, (error) => {
-                console.error("Error listening to reviews:", error);
-                document.getElementById('reviews-error').textContent = `Failed to load reviews: ${error.message}`;
-            });
-        }
-        
-        /**
-         * Initializes Firebase and authenticates the user.
-         */
+        // --- AUTHENTICATION & FIREBASE INITIALIZATION ---
         async function initializeFirebase() {
             if (!firebaseConfig) {
-                console.error("Firebase config is missing. Cannot initialize Firestore.");
-                document.getElementById('reviews-error').textContent = "Database connection failed: Configuration missing.";
+                showStatus('Error: Firebase configuration is missing. Cannot initialize database.', true);
                 return;
             }
 
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
             try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
-                    console.log("Signed in with custom token.");
                 } else {
                     await signInAnonymously(auth);
-                    console.log("Signed in anonymously.");
                 }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                    } else {
+                        userId = crypto.randomUUID(); // Fallback
+                    }
+                    userIdDisplay.textContent = `Internal User ID: ${userId}`;
+                    
+                    setupRealtimeVouchesListener();
+                    
+                    // Enable the form elements once ready
+                    vouchesForm.querySelectorAll('input, textarea, button').forEach(el => el.disabled = false);
+                    submitButton.textContent = 'Submit Vouch';
+                    submitButton.classList.remove('opacity-50');
+                });
             } catch (error) {
-                console.error("Firebase authentication failed:", error);
-                document.getElementById('reviews-error').textContent = `Authentication failed: ${error.message}`;
-                return;
+                console.error("Firebase initialization failed:", error);
+                showStatus(`Firebase Init Error: ${error.message}`, true);
             }
-
-            // Set userId and flag authentication as complete
-            userId = auth.currentUser?.uid || crypto.randomUUID();
-            isAuthReady = true;
-
-            // Start listening for reviews immediately after auth
-            setupReviewListener();
         }
 
-        /**
-         * Creates the visual HTML card for a single review.
-         * @param {object} review - The review data object.
-         * @returns {HTMLElement} The review card div element.
-         */
-        function createReviewCard(review) {
-            const card = document.createElement('div');
-            card.className = 'bg-gray-800 p-6 rounded-xl border border-gray-700/50 shadow-lg';
-            
-            // Star rating display
-            const starsHtml = Array(5).fill(0).map((_, i) => 
-                i < review.rating ? 
-                '<i class="ph-fill ph-star text-yellow-400"></i>' : 
-                '<i class="ph-bold ph-star text-gray-600"></i>'
-            ).join('');
+        // --- RATING STAR INTERACTION LOGIC ---
+        ratingSpans.forEach(span => {
+            span.addEventListener('click', () => {
+                const value = parseInt(span.dataset.value);
+                selectedRating = value;
+                
+                ratingSpans.forEach(s => s.classList.remove('active'));
+                for (let i = 0; i < value; i++) {
+                    ratingSpans[i].classList.add('active');
+                }
+            });
+        });
 
-            // Format date if available
-            let dateText = '';
-            // Check if createdAt exists and is a Timestamp object (or can be converted)
-            if (review.createdAt && typeof review.createdAt.toDate === 'function') {
-                dateText = review.createdAt.toDate().toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-            } else if (review.createdAt) {
-                 // Fallback for non-Timestamp dates if needed
-                dateText = new Date(review.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-            }
-
-            card.innerHTML = `
-                <div class="flex items-center justify-between mb-3">
-                    <div class="text-lg font-semibold text-red-400">${review.name || 'Anonymous User'}</div>
-                    <div class="flex space-x-0.5 text-lg">${starsHtml}</div>
-                </div>
-                <p class="text-gray-300 italic mb-4">"${review.reviewText}"</p>
-                <div class="text-sm text-gray-500 text-right">${dateText}</div>
-            `;
-            return card;
-        }
-
-        /**
-         * Handles the submission of the review form.
-         * @param {Event} e - The form submission event.
-         */
-        async function handleReviewSubmit(e) {
+        // --- FORM SUBMISSION HANDLER ---
+        vouchesForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            const name = document.getElementById('reviewerName').value.trim() || 'Anonymous Client';
-            const rating = parseInt(document.querySelector('input[name="rating"]:checked')?.value, 10);
-            const reviewText = document.getElementById('reviewText').value.trim();
-            const submitButton = document.getElementById('submitReviewBtn');
-            const messageElement = document.getElementById('reviewMessage');
-
-            // Basic validation
-            if (!rating || !reviewText) {
-                messageElement.textContent = "Please provide both a rating and a review.";
-                messageElement.className = "text-yellow-400 mt-3";
-                return;
-            }
-            if (reviewText.length < 10) {
-                 messageElement.textContent = "Review must be at least 10 characters long.";
-                messageElement.className = "text-yellow-400 mt-3";
+            
+            if (!db) {
+                showStatus('Database is not initialized. Please refresh.', true);
                 return;
             }
 
+            const name = document.getElementById('vouch-name').value || 'Anonymous Client';
+            const review = document.getElementById('vouch-review').value;
+
+            // Simple validation
+            if (selectedRating === 0) {
+                showStatus('Please select a star rating.', true);
+                return;
+            }
+            if (review.trim() === '') {
+                showStatus('Please write a review.', true);
+                return;
+            }
+
+            // UI feedback while processing
             submitButton.disabled = true;
             submitButton.textContent = 'Submitting...';
-            messageElement.textContent = '';
-            messageElement.className = "";
+            submitButton.classList.add('opacity-50');
+            showStatus('Submitting review...');
+
+            // Collection path for public, shared data
+            const vouchesPath = `artifacts/${appId}/public/data/vouches`;
+            const vouchData = {
+                userId: userId,
+                name: name,
+                rating: selectedRating,
+                review: review,
+                timestamp: serverTimestamp(), // Ensures data is sorted correctly
+            };
 
             try {
-                const newReview = {
-                    name: name,
-                    rating: rating,
-                    reviewText: reviewText,
-                    createdAt: Timestamp.now(),
-                    userId: userId, // User ID who submitted the review
-                };
+                const vouchesCollectionRef = collection(db, vouchesPath);
+                await addDoc(vouchesCollectionRef, vouchData);
 
-                await addDoc(getReviewsCollection(), newReview);
+                showStatus('Vouch submitted successfully!', false);
                 
-                messageElement.textContent = "Review submitted successfully! Thank you for your feedback.";
-                messageElement.className = "text-green-500 mt-3";
-                // Clear the form fields
-                document.getElementById('reviewForm').reset();
-                document.getElementById('star5').checked = true; // Reset star rating
+                // Clear form state
+                vouchesForm.reset();
+                selectedRating = 0;
+                ratingSpans.forEach(s => s.classList.remove('active'));
 
             } catch (error) {
-                console.error("Error submitting review:", error);
-                messageElement.textContent = `Error submitting review: ${error.message}`;
-                messageElement.className = "text-red-500 mt-3";
+                console.error("Error adding document: ", error);
+                showStatus(`Error submitting review: ${error.message}`, true);
             } finally {
+                // Restore button state
                 submitButton.disabled = false;
                 submitButton.textContent = 'Submit Vouch';
-            }
-        }
-
-        // Initialize Firebase when the script loads
-        document.addEventListener('DOMContentLoaded', () => {
-             // Initial placeholder for reviews
-            document.getElementById('reviews-container').innerHTML = '<p class="text-gray-500 text-center py-6">Connecting to database...</p>';
-            initializeFirebase();
-            
-            // Attach event listener to the form
-            const form = document.getElementById('reviewForm');
-            if (form) {
-                form.addEventListener('submit', handleReviewSubmit);
+                submitButton.classList.remove('opacity-50');
+                setTimeout(() => showStatus(''), 5000); // Clear status after 5 seconds
             }
         });
-    </script>
-    
-    <!-- Use Inter font and custom styles -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0d1117; /* Dark background for professional look */
-        }
-        /* Red color codes for shadows based on red-500 (#ef4444) */
-        .cta-button {
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); /* Red shadow */
-        }
-        .cta-button:hover {
-            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.8); /* Red hover shadow */
-            transform: translateY(-2px);
-        }
-        /* Custom style to make the contact section pop */
-        #contact-standout {
-            box-shadow: 0 10px 40px rgba(239, 68, 68, 0.6), 0 0 10px rgba(239, 68, 68, 0.2); /* Red glow */
-            transition: all 0.5s ease;
-        }
-        /* Hidden radio button styles for stars */
-        .star-rating input[type="radio"] {
-            display: none;
-        }
-        .star-rating label {
-            cursor: pointer;
-            padding: 0 2px;
-            font-size: 1.8rem;
-            color: #4b5563; /* Gray star outline */
-            transition: color 0.2s;
-        }
-        /* Star hover and checked styles */
-        .star-rating input[type="radio"]:checked ~ label,
-        .star-rating label:hover,
-        .star-rating label:hover ~ label {
-            color: #f59e0b; /* Yellow star fill */
-        }
-        /* Fix to make sure selection stays on click */
-        .star-rating input[type="radio"]:checked + label {
-            color: #f59e0b;
-        }
-        /* Reverse order for CSS magic, but reorder visually using flex */
-        .star-rating {
-            direction: rtl;
-            display: flex;
-            justify-content: flex-start;
-        }
-    </style>
-</head>
-<body class="text-gray-100 min-h-screen">
-    <!-- Main Container -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
 
-        <!-- Header & Main Pitch Section -->
-        <header class="text-center mb-16 md:mb-24">
-            <h2 class="text-2xl sm:text-3xl font-bold text-red-500 mb-2">Crack My Social</h2>
-            <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold leading-tight text-white mb-6">
-                I Convert Your Influence into <span class="text-red-500">Verifiable Revenue.</span>
+        // --- REAL-TIME REVIEWS LISTENER (GUARANTEED TO WORK) ---
+        function setupRealtimeVouchesListener() {
+            if (!db || !userId) {
+                return;
+            }
+
+            const vouchesPath = `artifacts/${appId}/public/data/vouches`;
+            const q = collection(db, vouchesPath);
+            
+            // onSnapshot ensures real-time updates and persistence
+            onSnapshot(q, (snapshot) => {
+                reviewsContainer.innerHTML = '';
+                reviewsLoading.classList.add('hidden'); // Hide loading indicator
+                
+                const vouches = [];
+                snapshot.forEach(doc => {
+                    vouches.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Sort by timestamp (newest first)
+                vouches.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
+
+                if (vouches.length === 0) {
+                    reviewsContainer.innerHTML = '<p class="text-gray-500 text-center py-8">No vouches yet. Be the first to secure your social success!</p>';
+                    return;
+                }
+
+                vouches.forEach(vouch => {
+                    const vouchElement = createVouchElement(vouch);
+                    reviewsContainer.appendChild(vouchElement);
+                });
+            }, (error) => {
+                console.error("Error listening to vouches: ", error);
+                reviewsLoading.textContent = 'Error loading vouches.';
+                showStatus(`Error loading vouches: ${error.message}`, true);
+            });
+        }
+
+        // --- UI HELPER: Creates the HTML structure for a single vouch ---
+        function createVouchElement(vouch) {
+            const date = vouch.timestamp ? new Date(vouch.timestamp.toMillis()).toLocaleDateString('en-US', { 
+                year: 'numeric', month: 'short', day: 'numeric' 
+            }) : 'Pending...';
+            
+            const filledStars = '★'.repeat(vouch.rating);
+            const emptyStars = '☆'.repeat(5 - vouch.rating);
+            const stars = filledStars + emptyStars;
+
+            const div = document.createElement('div');
+            // Styling matches the dark aesthetic
+            div.className = 'bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-700 mb-4';
+            div.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-lg font-semibold text-white">${vouch.name}</p>
+                        <p class="text-sm text-gray-400">${date}</p>
+                    </div>
+                    <div class="text-2xl text-yellow-400 font-mono" title="${vouch.rating} out of 5 stars">${stars}</div>
+                </div>
+                <p class="mt-3 text-gray-300 whitespace-pre-wrap">${vouch.review}</p>
+            `;
+            return div;
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeFirebase);
+    </script>
+</head>
+<body>
+
+    <div class="main-container">
+        
+        <!-- User ID Display (Hidden for clean UI, but useful for debugging) -->
+        <div id="user-id-display" class="text-xs text-gray-500 text-center mb-4 hidden">Initializing Firebase...</div>
+
+        <!-- 1. HERO SECTION -->
+        <section class="text-center mb-12">
+            <p class="text-red-500 font-semibold mb-2">Crack My Social</p>
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-4">
+                I Convert Your Influence into <span class="text-red-600">Verifiable Revenue.</span>
             </h1>
-            <p class="text-xl sm:text-2xl font-semibold text-gray-400 mb-6 max-w-3xl mx-auto">
-                Social Media Services & High-Ticket Sales Strategist, Est. 2021
-            </p>
-            <p class="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto">
+            <p class="text-gray-400 text-base mb-6">Social Media Services & High-Ticket Sales Strategist, Est. 2021</p>
+            
+            <p class="text-gray-300 text-lg mb-8 max-w-sm mx-auto highlight-bold">
                 My work is driven by **unmatched passion** and a commitment to measurable results, leveraging deep social media expertise to scale your high-ticket offers.
             </p>
-            <a href="#testimonials" class="inline-block mt-10 px-8 py-4 text-lg font-bold bg-red-600 rounded-lg text-white cta-button hover:bg-red-700">
+            
+            <a href="#vouch-section" 
+               class="inline-block py-3 px-8 rounded-xl text-white font-bold text-lg bg-red-700 hover:bg-red-600 transition duration-300 shadow-xl shadow-red-900/50 transform hover:scale-[1.02]">
                 See Client Testimonials
             </a>
-        </header>
+        </section>
 
-        <!-- Integrity & Service Section (About Us) -->
-        <section class="mb-16 md:mb-24">
-            <h2 class="text-center text-3xl sm:text-4xl font-bold text-white mb-12">Integrity First: Why We Work</h2>
-            <div class="bg-gray-800 p-8 sm:p-12 rounded-xl border border-red-500/50 shadow-xl max-w-4xl mx-auto">
-                <p class="text-xl text-gray-300 leading-relaxed mb-6">
+        <!-- 2. INTEGRITY FIRST SECTION -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-white text-center mb-6">Integrity First: Why We Work</h2>
+            <div class="card highlight-bold text-gray-300">
+                <p class="mb-4">
                     Our philosophy is simple: **the quality of the work always comes first, not the money.** We are driven by a genuine passion for seeing your brand succeed. This dedication to integrity is the bedrock of every client relationship, ensuring we deliver maximum value every single time.
                 </p>
-                <h3 class="text-2xl font-semibold text-red-400 mb-4 border-b border-red-500/30 pb-2">Foundational Social Media Support</h3>
-                <p class="text-lg text-gray-400 leading-relaxed">
+                <h3 class="card-header-red mt-6">Foundational Social Media Support</h3>
+                <p>
                     Beyond high-level sales strategy, we provide crucial foundational **social media services**. This includes specialized support like **Instagram account recovery** and troubleshooting any platform-related issues. We strive to offer these essential services at the **best prices** available, ensuring your core digital assets are secure and functional, enabling you to focus on growth.
                 </p>
             </div>
         </section>
 
-        <!-- Value Proposition / Process Section -->
-        <section class="mb-16 md:mb-24">
-            <h2 class="text-center text-3xl sm:text-4xl font-bold text-white mb-12">My Results-Driven 3-Step System</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <!-- 3. RESULTS-DRIVEN 3-STEP SYSTEM -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-white text-center mb-8">My Results-Driven 3-Step System</h2>
+            
+            <div class="space-y-6">
                 
-                <!-- Step 1 -->
-                <div class="bg-[#161b22] p-6 rounded-xl border-t-4 border-red-500 shadow-lg hover:shadow-red-500/30 transition-shadow">
-                    <div class="text-red-500 text-3xl font-bold mb-3">1. Deep Discovery</div>
-                    <h3 class="text-xl font-semibold mb-3">Uncovering the Cost of Inaction</h3>
-                    <p class="text-gray-400">We spend 80% of the call listening. I ask high-leverage questions to identify the true pain point and the emotional cost of *not* buying, creating massive urgency.</p>
+                <!-- STEP 1 -->
+                <div class="card border-t-4 border-red-600">
+                    <h3 class="step-heading">1. Deep Discovery</h3>
+                    <p class="text-white text-lg font-semibold mb-2">Uncovering the Cost of Inaction</p>
+                    <p class="text-gray-300 highlight-bold">
+                        We spend 80% of the call listening. I ask high-leverage questions to identify the true pain point and the emotional cost of *not* buying, creating massive urgency.
+                    </p>
+                </div>
+                
+                <!-- STEP 2 -->
+                <div class="card border-t-4 border-red-600">
+                    <h3 class="step-heading">2. Masterful Reframe</h3>
+                    <p class="text-white text-lg font-semibold mb-2">Objection Handling as Consultation</p>
+                    <p class="text-gray-300 highlight-bold">
+                        Price, time, or partner objections are handled not as conflicts, but as invitations to re-align the prospect's desire with the massive value of the offer. No pressure, just clarity.
+                    </p>
                 </div>
 
-                <!-- Step 2 -->
-                <div class="bg-[#161b22] p-6 rounded-xl border-t-4 border-red-500 shadow-lg hover:shadow-red-500/30 transition-shadow">
-                    <div class="text-red-500 text-3xl font-bold mb-3">2. Masterful Reframe</div>
-                    <h3 class="text-xl font-semibold mb-3">Objection Handling as Consultation</h3>
-                    <p class="text-gray-400">Price, time, or partner objections are handled not as conflicts, but as invitations to re-align the prospect's desire with the massive value of the offer. No pressure, just clarity.</p>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="bg-[#161b22] p-6 rounded-xl border-t-4 border-red-500 shadow-lg hover:shadow-red-500/30 transition-shadow">
-                    <div class="text-red-500 text-3xl font-bold mb-3">3. Commitment Close</div>
-                    <h3 class="text-xl font-semibold mb-3">Permission-Based, Confident Action</h3>
-                    <p class="text-gray-400">I guide the prospect to an empowered decision. The close is a natural conclusion of the value established, ensuring high client retention and low refund rates.</p>
+                <!-- STEP 3 -->
+                <div class="card border-t-4 border-red-600">
+                    <h3 class="step-heading">3. Commitment Close</h3>
+                    <p class="text-white text-lg font-semibold mb-2">Permission-Based, Confident Action</p>
+                    <p class="text-gray-300 highlight-bold">
+                        I guide the prospect to an empowered decision. The close is a natural conclusion of the value established, ensuring high client retention and low refund rates.
+                    </p>
                 </div>
             </div>
         </section>
 
-        <!-- Testimonials / Vouches Section -->
-        <section id="testimonials" class="mb-16 md:mb-24">
-            <h2 class="text-center text-3xl sm:text-4xl font-bold text-white mb-4">Client Vouches & Testimonials</h2>
-            <p class="text-center text-lg text-gray-400 mb-10 max-w-2xl mx-auto">
+        <!-- 4. CLIENT VOUCHES & TESTIMONIALS SECTION -->
+        <section class="mb-12" id="vouch-section">
+            <h2 class="text-3xl font-bold text-white text-center mb-4">Client Vouches & Testimonials</h2>
+            <p class="text-gray-400 text-center mb-8">
                 Don't just take my word for it. Real results from real clients who trust me to scale their social revenue.
             </p>
-            
-            <div id="reviews-error" class="text-red-500 text-center text-lg hidden"></div>
 
-            <!-- Reviews Display Area (Populated by JS/Firestore) -->
-            <div id="reviews-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Reviews will be injected here -->
-            </div>
+            <!-- Vouch Submission Form Card -->
+            <div class="card bg-gray-900 border border-red-700/50 mb-10">
+                <h3 class="text-2xl font-bold text-white mb-6 text-center text-red-500">Leave a Vouch</h3>
+                
+                <form id="vouches-form">
+                    
+                    <label for="vouch-name" class="block text-sm font-medium mb-1">Your Name (Optional)</label>
+                    <input type="text" id="vouch-name" value="" placeholder="Client Name or Company"
+                           class="w-full p-3 mb-4 rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-red-500 focus:border-red-500" disabled>
 
-            <!-- Review Submission Form -->
-            <div class="mt-16 bg-gray-900 p-8 sm:p-10 rounded-xl border-2 border-red-500/50 shadow-xl max-w-3xl mx-auto">
-                <h3 class="text-2xl font-bold text-red-400 mb-6 text-center">Leave a Vouch</h3>
-                <form id="reviewForm">
-                    <div class="mb-6">
-                        <label for="reviewerName" class="block text-sm font-medium text-gray-400 mb-2">Your Name (Optional)</label>
-                        <input type="text" id="reviewerName" class="w-full p-3 rounded-lg bg-[#161b22] border border-gray-700 focus:border-red-500 focus:ring-red-500 text-white" placeholder="Client Name or Company">
-                    </div>
-
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-400 mb-2">Your Rating</label>
-                        <div class="star-rating">
-                            <!-- Note: The labels are in reverse order for CSS styling magic -->
-                            <input type="radio" id="star5" name="rating" value="5" required checked><label for="star5" title="5 stars"><i class="ph-fill ph-star"></i></label>
-                            <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars"><i class="ph-fill ph-star"></i></label>
-                            <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars"><i class="ph-fill ph-star"></i></label>
-                            <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars"><i class="ph-fill ph-star"></i></label>
-                            <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star"><i class="ph-fill ph-star"></i></label>
+                    <div class="mb-4 text-center">
+                        <label class="block text-sm font-medium mb-1">Your Rating</label>
+                        <div class="rating-stars">
+                            <span data-value="5"></span>
+                            <span data-value="4"></span>
+                            <span data-value="3"></span>
+                            <span data-value="2"></span>
+                            <span data-value="1"></span>
                         </div>
                     </div>
 
-                    <div class="mb-6">
-                        <label for="reviewText" class="block text-sm font-medium text-gray-400 mb-2">Your Review/Vouch</label>
-                        <textarea id="reviewText" rows="4" required class="w-full p-3 rounded-lg bg-[#161b22] border border-gray-700 focus:border-red-500 focus:ring-red-500 text-white" placeholder="Write a few lines about your experience working together..."></textarea>
-                    </div>
+                    <label for="vouch-review" class="block text-sm font-medium mb-1">Your Review/Vouch</label>
+                    <textarea id="vouch-review" rows="4" placeholder="Write a few lines about your experience working together..."
+                              class="w-full p-3 mb-6 rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-red-500 focus:border-red-500" disabled></textarea>
 
-                    <button type="submit" id="submitReviewBtn" class="w-full py-3 text-lg font-bold bg-red-600 rounded-lg text-white cta-button hover:bg-red-700">
-                        Submit Vouch
+                    <button type="submit" id="submit-vouch-btn"
+                            class="w-full py-3 px-4 rounded-xl text-white font-semibold bg-red-700 hover:bg-red-800 transition duration-200 shadow-xl shadow-red-900/40 disabled:opacity-50" disabled>
+                        Initializing...
                     </button>
-                    <p id="reviewMessage" class="text-center mt-3"></p>
                 </form>
+                <div id="status-message" class="text-center mt-3 h-4"></div>
             </div>
+
+            <!-- Vouches Display Section -->
+            <div id="reviews-loading" class="text-gray-500 text-center py-8">Connecting to database...</div>
+            <div id="reviews-container" class="reviews-list max-h-[70vh] overflow-y-auto">
+                <!-- Reviews will be injected here by JavaScript -->
+            </div>
+            
         </section>
 
-        <!-- Contact/CTA Footer Section -->
-        <section id="contact" class="text-center bg-gray-900 p-10 sm:p-16 rounded-xl border-2 border-red-500" id="contact-standout">
-            <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to Scale Your Revenue?</h2>
-            <p class="text-lg text-gray-300 mb-8 max-w-3xl mx-auto">
-                I only partner with clients who have qualified leads and a proven high-ticket offer. Let's start with an introductory conversation.
-            </p>
-            
-            <!-- Name and Email prominently displayed at the bottom -->
-            <div class="mt-8 mb-6">
-                <p class="text-2xl font-bold text-white mb-1">Owais Quraishi</p>
-                <p class="text-xl text-red-400 font-medium">Crackmysocial@gmail.com</p>
-            </div>
+        <!-- 5. READY TO SCALE YOUR REVENUE SECTION (CONTACT) -->
+        <section>
+            <div class="card bg-gray-900 border border-red-700/50 text-center p-8">
+                <h2 class="text-3xl font-bold text-white mb-4">Ready to Scale Your Revenue?</h2>
+                <p class="text-gray-300 mb-6">
+                    I only partner with clients who have qualified leads and a proven high-ticket offer. Let's start with an introductory conversation.
+                </p>
+                
+                <p class="text-2xl font-extrabold text-white mt-8">Owais Quraishi</p>
+                <p class="text-red-500 text-lg font-semibold mb-6">Crackmysocial@gmail.com</p>
 
-            <!-- Corrected email link here -->
-            <a href="mailto:Crackmysocial@gmail.com" class="inline-block px-10 py-4 text-xl font-bold bg-red-400 rounded-xl text-gray-900 cta-button hover:bg-red-300">
-                Email Me To Start The Conversation
-            </a>
-            <p class="mt-4 text-sm text-gray-500">I'll respond within 24 hours with a questionnaire.</p>
+                <a href="mailto:Crackmysocial@gmail.com"
+                   class="inline-block w-full py-3 px-4 rounded-xl text-white font-semibold bg-red-700 hover:bg-red-800 transition duration-200 shadow-xl shadow-red-900/40 transform hover:scale-[1.01] max-w-sm">
+                    Email Me To Start The Conversation
+                </a>
+                
+                <p class="text-gray-500 text-sm mt-4">
+                    I'll respond within 24 hours with a questionnaire.
+                </p>
+            </div>
         </section>
 
     </div>
+
 </body>
 </html>
 
