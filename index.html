@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0">
     <title>Crack My Social - Convert Influence into Revenue</title>
     <!-- Load Tailwind CSS for utility-first styling -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -39,7 +39,6 @@
             font-size: 1.5rem;
             margin-bottom: 8px;
         }
-        /* Style for Step Headings (1. Deep Discovery, etc.) */
         .step-heading {
             color: #ff4757;
             font-size: 1.875rem; /* text-3xl */
@@ -94,16 +93,30 @@
     <!-- FIREBASE SDK & APPLICATION LOGIC (VOUCH SYSTEM) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Enable debug logging for robust error tracking
         setLogLevel('Debug');
         
-        // --- GLOBAL VARIABLES & ENVIRONMENT SETUP ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // =========================================================================================
+        // === YOUR FIREBASE CONFIGURATION (UPDATED FROM USER QUERY) ===
+        // =========================================================================================
+        
+        // NOTE: The APP_ID must match the projectId in the config for the Firestore path to work correctly.
+        const APP_ID = 'crackmysocial-vouches'; 
+        
+        // This is the object provided by the user, ensuring the app connects to the correct database.
+        const YOUR_FIREBASE_CONFIG = {
+             apiKey: "AIzaSyAgviyjfTm_tN1Pab3UU4tR7yzaydOePtM",
+             authDomain: "crackmysocial-vouches.firebaseapp.com",
+             projectId: "crackmysocial-vouches",
+             storageBucket: "crackmysocial-vouches.firebasestorage.app",
+             messagingSenderId: "440445963426",
+             appId: "1:440445963426:web:3639094b7934f9087a5bfb",
+             measurementId: "G-LH0LL614P2"
+        };
+        // =========================================================================================
 
         let db = null;
         let auth = null;
@@ -116,7 +129,6 @@
         const submitButton = document.getElementById('submit-vouch-btn');
         const statusMessage = document.getElementById('status-message');
         const ratingSpans = document.querySelectorAll('.rating-stars span');
-        const userIdDisplay = document.getElementById('user-id-display');
         const reviewsLoading = document.getElementById('reviews-loading');
 
         function showStatus(message, isError = false) {
@@ -128,29 +140,29 @@
 
         // --- AUTHENTICATION & FIREBASE INITIALIZATION ---
         async function initializeFirebase() {
-            if (!firebaseConfig) {
-                showStatus('Error: Firebase configuration is missing. Cannot initialize database.', true);
+            // Quick check to ensure the config is present
+            if (!YOUR_FIREBASE_CONFIG.apiKey || YOUR_FIREBASE_CONFIG.apiKey.length < 10) {
+                const configMissingMsg = 'Error: Firebase API Key is missing. Check the script block.';
+                console.error(configMissingMsg);
+                reviewsLoading.textContent = configMissingMsg;
+                showStatus(configMissingMsg, true);
                 return;
             }
 
             try {
-                const app = initializeApp(firebaseConfig);
+                const app = initializeApp(YOUR_FIREBASE_CONFIG);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Sign in anonymously for public data access 
+                await signInAnonymously(auth);
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
                     } else {
-                        userId = crypto.randomUUID(); // Fallback
+                        userId = crypto.randomUUID(); // Fallback if sign-in fails
                     }
-                    userIdDisplay.textContent = `Internal User ID: ${userId}`;
                     
                     setupRealtimeVouchesListener();
                     
@@ -161,7 +173,9 @@
                 });
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
-                showStatus(`Firebase Init Error: ${error.message}`, true);
+                const initErrorMsg = `Firebase Init Error: Check your configuration details. (${error.message})`;
+                reviewsLoading.textContent = initErrorMsg;
+                showStatus(initErrorMsg, true);
             }
         }
 
@@ -207,13 +221,13 @@
             showStatus('Submitting review...');
 
             // Collection path for public, shared data
-            const vouchesPath = `artifacts/${appId}/public/data/vouches`;
+            const vouchesPath = `artifacts/${APP_ID}/public/data/vouches`;
             const vouchData = {
                 userId: userId,
                 name: name,
                 rating: selectedRating,
                 review: review,
-                timestamp: serverTimestamp(), // Ensures data is sorted correctly
+                timestamp: serverTimestamp(),
             };
 
             try {
@@ -229,23 +243,30 @@
 
             } catch (error) {
                 console.error("Error adding document: ", error);
-                showStatus(`Error submitting review: ${error.message}`, true);
+                
+                let errorMsg = `Error submitting review: ${error.message}`;
+                if (error.code === 'permission-denied') {
+                    // This often happens if the user forgot Step 3 (setting security rules to test mode)
+                    errorMsg = 'Permission Denied! Check your Firestore Security Rules (you may need to set them to "test mode").';
+                }
+                
+                showStatus(errorMsg, true);
             } finally {
                 // Restore button state
                 submitButton.disabled = false;
                 submitButton.textContent = 'Submit Vouch';
                 submitButton.classList.remove('opacity-50');
-                setTimeout(() => showStatus(''), 5000); // Clear status after 5 seconds
+                setTimeout(() => showStatus(''), 5000);
             }
         });
 
-        // --- REAL-TIME REVIEWS LISTENER (GUARANTEED TO WORK) ---
+        // --- REAL-TIME REVIEWS LISTENER ---
         function setupRealtimeVouchesListener() {
-            if (!db || !userId) {
+            if (!db) {
                 return;
             }
 
-            const vouchesPath = `artifacts/${appId}/public/data/vouches`;
+            const vouchesPath = `artifacts/${APP_ID}/public/data/vouches`;
             const q = collection(db, vouchesPath);
             
             // onSnapshot ensures real-time updates and persistence
@@ -272,8 +293,14 @@
                 });
             }, (error) => {
                 console.error("Error listening to vouches: ", error);
-                reviewsLoading.textContent = 'Error loading vouches.';
-                showStatus(`Error loading vouches: ${error.message}`, true);
+                
+                let errorMsg = 'Error loading vouches.';
+                if (error.code === 'permission-denied') {
+                    errorMsg = 'Permission Denied! Cannot read vouches. Check your Firestore Security Rules.';
+                }
+
+                reviewsLoading.textContent = errorMsg;
+                showStatus(errorMsg, true);
             });
         }
 
@@ -288,7 +315,6 @@
             const stars = filledStars + emptyStars;
 
             const div = document.createElement('div');
-            // Styling matches the dark aesthetic
             div.className = 'bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-700 mb-4';
             div.innerHTML = `
                 <div class="flex justify-between items-start">
@@ -310,9 +336,6 @@
 
     <div class="main-container">
         
-        <!-- User ID Display (Hidden for clean UI, but useful for debugging) -->
-        <div id="user-id-display" class="text-xs text-gray-500 text-center mb-4 hidden">Initializing Firebase...</div>
-
         <!-- 1. HERO SECTION -->
         <section class="text-center mb-12">
             <p class="text-red-500 font-semibold mb-2">Crack My Social</p>
