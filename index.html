@@ -1,201 +1,291 @@
-export default function Home() {
-  return (
-    <main style={styles.main}>
-      {/* NAV */}
-      <nav style={styles.nav}>
-        <img src="/logo.png" alt="CrackMySocial" style={styles.logo} />
-      </nav>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0">
+    <title>Crack My Social | Elite Social Asset Recovery & Security</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020202;
+            color: #ffffff;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .glass-card {
+            background: rgba(15, 15, 15, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 71, 87, 0.15);
+            border-radius: 20px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 71, 87, 0.5);
+            transform: translateY(-5px);
+            background: rgba(25, 25, 25, 0.8);
+        }
+        .red-gradient-text {
+            background: linear-gradient(90deg, #ff4757, #ff6b81, #ff4757);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+        .btn-premium {
+            background: linear-gradient(135deg, #ff4757 0%, #9e1c28 100%);
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-premium::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(45deg);
+            transition: 0.5s;
+        }
+        .btn-premium:hover::after {
+            left: 120%;
+        }
+        .step-number {
+            background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+            border: 1px solid #ff4757;
+        }
+        .mesh-bg {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 100vh;
+            background: radial-gradient(circle at 50% 30%, rgba(255, 71, 87, 0.08) 0%, transparent 70%);
+            z-index: -1;
+        }
+        .hero-logo {
+            filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.4));
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* Centering Logic for Nav */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="antialiased">
 
-      {/* HERO */}
-      <section style={styles.hero}>
-        <h1 style={styles.h1}>
-          Instagram Account Recovery & Shadowban Resolution
-        </h1>
-        <p style={styles.sub}>
-          Professional, priority-based solutions for creators, brands, and businesses.
-          One case at a time. No shortcuts.
-        </p>
-        <a href="#contact" style={styles.cta}>
-          Request Evaluation
-        </a>
-      </section>
+    <div class="mesh-bg"></div>
 
-      {/* TRUST STRIP */}
-      <section style={styles.trust}>
-        <p>• Discreet • Secure • Priority Handling •</p>
-      </section>
+    <!-- NAVIGATION -->
+    <nav class="sticky top-0 z-50 bg-black/60 backdrop-blur-xl border-b border-white/5 px-6 py-6 md:py-8">
+        <div class="max-w-7xl mx-auto nav-grid">
+            
+            <!-- Left Side: Navigation Links (Desktop) / Logo (Mobile) -->
+            <div class="flex items-center justify-start gap-8">
+                <div class="hidden lg:flex gap-8 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">
+                    <a href="#services" class="hover:text-red-500 transition">Capabilities</a>
+                    <a href="#process" class="hover:text-red-500 transition">Protocol</a>
+                </div>
+                <!-- Mini Logo for context on mobile/small screens -->
+                <img src="logo.png" alt="CMS Logo" class="h-10 w-auto lg:h-12" onerror="this.style.display='none'">
+            </div>
 
-      {/* SERVICES */}
-      <section style={styles.section}>
-        <h2 style={styles.h2}>What We Do</h2>
-        <div style={styles.cards}>
-          <div style={styles.card}>
-            <h3>Account Recovery</h3>
-            <p>
-              Restoring disabled, suspended, or locked Instagram accounts using
-              compliant escalation processes.
-            </p>
-          </div>
-          <div style={styles.card}>
-            <h3>Shadowban Resolution</h3>
-            <p>
-              Diagnosing visibility restrictions and restoring reach through
-              professional remediation.
-            </p>
-          </div>
-          <div style={styles.card}>
-            <h3>Username Claims</h3>
-            <p>
-              Strategic handling of username and handle-related recovery cases.
-            </p>
-          </div>
+            <!-- Center: The Headline Branding -->
+            <div class="text-center px-4">
+                <h1 class="text-xl md:text-3xl font-black tracking-tighter uppercase font-heading whitespace-nowrap">
+                    CRACK<span class="text-red-600">MY</span>SOCIAL
+                </h1>
+            </div>
+
+            <!-- Right Side: Secure Inquiry Button -->
+            <div class="flex items-center justify-end">
+                <a href="mailto:crackmysocial@gmail.com" class="btn-premium px-6 py-3 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest shadow-xl shadow-red-900/30">
+                    Secure Inquiry
+                </a>
+            </div>
         </div>
-      </section>
+    </nav>
 
-      {/* PROCESS */}
-      <section style={styles.sectionAlt}>
-        <h2 style={styles.h2}>Our Approach</h2>
-        <ol style={styles.list}>
-          <li>Private evaluation of your case</li>
-          <li>Priority handling with clear timelines</li>
-          <li>Resolution or clear next steps</li>
-        </ol>
-        <p style={styles.note}>
-          We do not mass-handle requests. Each case is handled individually.
+    <!-- HERO SECTION -->
+    <header class="max-w-5xl mx-auto text-center pt-20 pb-16 px-6">
+        <div class="flex justify-center mb-10">
+            <img src="logo.png" alt="CrackMySocial" class="hero-logo h-32 md:h-44 w-auto" onerror="this.style.visibility='hidden'; this.style.height='0px';">
+        </div>
+
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-950/40 border border-red-500/30 text-red-500 text-[10px] font-bold mb-8 tracking-[0.2em] uppercase">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            Establishing Secure Connection... Priority Status Active
+        </div>
+
+        <h1 class="text-6xl md:text-8xl font-extrabold mb-8 leading-[1.1] tracking-tighter">
+            Elite Social <br><span class="red-gradient-text">Asset Recovery.</span>
+        </h1>
+        <p class="text-gray-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed font-light">
+            We operate at the high-stakes intersection of platform ethics and technical precision to reclaim what is rightfully yours. Encrypted. Professional. Rapid.
         </p>
-      </section>
+        <div class="flex flex-col sm:flex-row justify-center gap-6">
+            <a href="#services" class="btn-premium px-12 py-5 rounded-2xl font-bold uppercase tracking-widest text-sm shadow-2xl shadow-red-900/40">
+                Initiate Protocol
+            </a>
+            <div class="flex items-center justify-center gap-4 text-gray-500 text-sm italic">
+                <span>EST 2021</span>
+                <span class="h-1 w-1 bg-gray-700 rounded-full"></span>
+                <span>Fastest Recovery Agency</span>
+            </div>
+        </div>
+    </header>
 
-      {/* CONTACT */}
-      <section id="contact" style={styles.section}>
-        <h2 style={styles.h2}>Request Access Review</h2>
-        <p style={styles.subSmall}>
-          Serious inquiries only. Responses within 24 hours.
-        </p>
+    <!-- TRUST BAR -->
+    <section class="max-w-6xl mx-auto py-12 px-6">
+        <p class="text-center text-gray-600 text-[10px] uppercase tracking-[0.4em] font-bold mb-8 italic">Specializing in high-value assets across</p>
+        <div class="flex flex-wrap justify-center gap-8 md:gap-16 opacity-30 grayscale hover:grayscale-0 transition duration-700">
+            <span class="text-2xl font-bold tracking-tighter">INSTAGRAM</span>
+            <span class="text-2xl font-bold tracking-tighter">META</span>
+            <span class="text-2xl font-bold tracking-tighter">THREADS</span>
+            <span class="text-2xl font-bold tracking-tighter">X (TWITTER)</span>
+            <span class="text-2xl font-bold tracking-tighter">WHATSAPP</span>
+        </div>
+    </section>
 
-        <a
-          href="mailto:crackmysocial@gmail.com"
-          style={styles.ctaAlt}
-        >
-          Contact via Email
-        </a>
-      </section>
+    <!-- SERVICES -->
+    <section id="services" class="max-w-6xl mx-auto py-24 px-6">
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="glass-card p-10 flex flex-col h-full border-t-2 border-t-red-600/20">
+                <div class="h-12 w-12 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500 text-2xl mb-8">🛡️</div>
+                <h3 class="text-2xl font-bold mb-4 uppercase tracking-tighter">IG Recovery</h3>
+                <p class="text-gray-400 text-sm leading-relaxed mb-8 font-light">Instant intervention for disabled, hacked, or memorialized high-ticket accounts. We understand the urgency; we operate without delays.</p>
+                <div class="mt-auto text-red-500 text-[10px] font-bold uppercase tracking-[0.2em]">Absolute Response Priority</div>
+            </div>
+            <div class="glass-card p-10 flex flex-col h-full border-red-500/30">
+                <div class="h-12 w-12 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500 text-2xl mb-8">🚀</div>
+                <h3 class="text-2xl font-bold mb-4 uppercase tracking-tighter">Shadowban Uplift</h3>
+                <p class="text-gray-400 text-sm leading-relaxed mb-8 font-light">Technical scrubbing of internal platform flags. We restore organic reach by aligning account standing with platform best-practices.</p>
+                <div class="mt-auto text-red-500 text-[10px] font-bold uppercase tracking-[0.2em]">Growth Restoration</div>
+            </div>
+            <div class="glass-card p-10 flex flex-col h-full border-t-2 border-t-red-600/20">
+                <div class="h-12 w-12 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500 text-2xl mb-8">💎</div>
+                <h3 class="text-2xl font-bold mb-4 uppercase tracking-tighter">Username Claims</h3>
+                <p class="text-gray-400 text-sm leading-relaxed mb-8 font-light">Acquisition of premium or inactive handles for brands and high-profile individuals. Professional negotiation and direct claim protocols.</p>
+                <div class="mt-auto text-red-500 text-[10px] font-bold uppercase tracking-[0.2em]">Corporate Tier Security</div>
+            </div>
+        </div>
+    </section>
 
-      {/* FOOTER */}
-      <footer style={styles.footer}>
-        <p>©️ {new Date().getFullYear()} CrackMySocial</p>
-        <p style={styles.footerSmall}>
-          Independent digital services. Not affiliated with Meta.
-        </p>
-      </footer>
-    </main>
-  );
-}
+    <!-- THE PROCESS -->
+    <section id="process" class="max-w-6xl mx-auto py-24 px-6 border-y border-white/5">
+        <h2 class="text-4xl font-bold text-center mb-20 uppercase tracking-tighter">One Case At A Time: <span class="text-red-600">The Protocol</span></h2>
+        <div class="grid md:grid-cols-3 gap-12">
+            <div class="text-center">
+                <div class="w-12 h-12 step-number rounded-full flex items-center justify-center font-bold text-red-500 mx-auto mb-6">01</div>
+                <h4 class="font-bold text-lg mb-2 uppercase tracking-wide">Secure Intake</h4>
+                <p class="text-gray-500 text-sm font-light">Analyze violations and platform history through an encrypted brief to determine the path of least resistance.</p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 step-number rounded-full flex items-center justify-center font-bold text-red-500 mx-auto mb-6">02</div>
+                <h4 class="font-bold text-lg mb-2 uppercase tracking-wide">Direct Action</h4>
+                <p class="text-gray-500 text-sm font-light">We utilize proprietary channels to trigger manual re-evaluation, bypassing standard automated refusal loops.</p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 step-number rounded-full flex items-center justify-center font-bold text-red-500 mx-auto mb-6">03</div>
+                <h4 class="font-bold text-lg mb-2 uppercase tracking-wide">Asset Release</h4>
+                <p class="text-gray-500 text-sm font-light">Full restoration with updated security guidelines to prevent future lockouts. Your asset is returned permanent and secure.</p>
+            </div>
+        </div>
+    </section>
 
-const styles: any = {
-  main: {
-    backgroundColor: "#0b0b0f",
-    color: "#e5e7eb",
-    fontFamily: "Inter, sans-serif",
-    minHeight: "100vh",
-  },
-  nav: {
-    padding: "24px 32px",
-  },
-  logo: {
-    height: "38px",
-  },
-  hero: {
-    padding: "120px 32px 80px",
-    maxWidth: "900px",
-    margin: "0 auto",
-    textAlign: "center",
-  },
-  h1: {
-    fontSize: "42px",
-    fontWeight: 700,
-    lineHeight: 1.2,
-  },
-  sub: {
-    marginTop: "20px",
-    fontSize: "18px",
-    color: "#9ca3af",
-  },
-  cta: {
-    display: "inline-block",
-    marginTop: "36px",
-    padding: "14px 28px",
-    backgroundColor: "#ffffff",
-    color: "#000",
-    borderRadius: "8px",
-    textDecoration: "none",
-    fontWeight: 600,
-  },
-  trust: {
-    textAlign: "center",
-    padding: "16px",
-    color: "#6b7280",
-    fontSize: "14px",
-  },
-  section: {
-    padding: "96px 32px",
-    maxWidth: "1000px",
-    margin: "0 auto",
-  },
-  sectionAlt: {
-    padding: "96px 32px",
-    backgroundColor: "#111118",
-  },
-  h2: {
-    fontSize: "32px",
-    fontWeight: 600,
-    marginBottom: "40px",
-    textAlign: "center",
-  },
-  cards: {
-    display: "grid",
-    gap: "24px",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-  },
-  card: {
-    backgroundColor: "#0f0f15",
-    padding: "28px",
-    borderRadius: "12px",
-    border: "1px solid #1f2933",
-  },
-  list: {
-    maxWidth: "520px",
-    margin: "0 auto",
-    fontSize: "18px",
-    lineHeight: 1.8,
-  },
-  note: {
-    marginTop: "28px",
-    textAlign: "center",
-    color: "#9ca3af",
-  },
-  subSmall: {
-    textAlign: "center",
-    color: "#9ca3af",
-    marginBottom: "24px",
-  },
-  ctaAlt: {
-    display: "block",
-    width: "fit-content",
-    margin: "0 auto",
-    padding: "14px 28px",
-    border: "1px solid #374151",
-    borderRadius: "8px",
-    color: "#e5e7eb",
-    textDecoration: "none",
-  },
-  footer: {
-    padding: "40px 32px",
-    textAlign: "center",
-    color: "#6b7280",
-    fontSize: "14px",
-  },
-  footerSmall: {
-    marginTop: "6px",
-    fontSize: "12px",
-  },
-};
+    <!-- ABOUT SECTION -->
+    <section id="about" class="max-w-5xl mx-auto py-32 px-6">
+        <div class="flex flex-col md:flex-row gap-20 items-center">
+            <div class="flex-1">
+                <p class="text-red-600 font-bold uppercase text-[10px] tracking-[0.4em] mb-6">Agency Background</p>
+                <h2 class="text-4xl font-bold mb-8 uppercase tracking-tighter">Owais <br>Quraishi</h2>
+                <p class="text-gray-400 leading-relaxed mb-6 font-light italic">
+                    "When every minute of downtime costs revenue, standard appeals are not an option. CrackMySocial provides the professional intervention required to navigate platform crises with zero friction."
+                </p>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Under Owais's leadership since 2021, CMS has maintained its reputation as the fastest and most discreet agency in the recovery space. We prioritize integrity and encryption in every single interaction.
+                </p>
+            </div>
+            <div class="flex-1 w-full">
+                <div class="glass-card p-10 border-l-4 border-l-red-600 shadow-2xl shadow-red-900/10">
+                    <div class="space-y-10">
+                        <div>
+                            <div class="text-4xl font-bold tracking-tighter">1,200+</div>
+                            <div class="text-[10px] text-gray-500 uppercase tracking-[0.2em] mt-2 font-bold">Accounts Successfully Restored</div>
+                        </div>
+                        <div>
+                            <div class="text-4xl font-bold tracking-tighter">99.4%</div>
+                            <div class="text-[10px] text-gray-500 uppercase tracking-[0.2em] mt-2 font-bold">Success Rate Per Case</div>
+                        </div>
+                        <div>
+                            <div class="text-4xl font-bold tracking-tighter">&lt; 12 Hours</div>
+                            <div class="text-[10px] text-gray-500 uppercase tracking-[0.2em] mt-2 font-bold">Initial Action Response</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-[#050505] pt-32 pb-16 px-6">
+        <div class="max-w-6xl mx-auto text-center">
+            <img src="logo.png" alt="Logo" class="h-20 w-auto mx-auto mb-12 opacity-60 grayscale hover:grayscale-0 transition duration-500" onerror="this.style.visibility='hidden'; this.style.height='0px';">
+            
+            <h2 class="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter font-heading">Ready to reclaim your <br>digital <span class="text-red-600">Future.</span></h2>
+            
+            <div class="mb-20">
+                <a href="mailto:crackmysocial@gmail.com" class="text-2xl md:text-5xl font-bold hover:text-red-500 transition border-b-2 border-white/10 pb-4 inline-block tracking-tight">
+                    crackmysocial@gmail.com
+                </a>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-12 text-center items-start mb-20 max-w-3xl mx-auto">
+                <div>
+                    <h5 class="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-4">Operations</h5>
+                    <p class="text-gray-400 text-xs font-light tracking-wide uppercase">Global / Encrypted Delivery</p>
+                </div>
+                <div>
+                    <h5 class="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-4">Availability</h5>
+                    <p class="text-gray-400 text-xs font-light tracking-wide uppercase">24/7 Priority Support</p>
+                </div>
+                <div>
+                    <h5 class="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-4">Foundation</h5>
+                    <p class="text-gray-400 text-xs font-light tracking-wide uppercase">Est. 2021 | Founder Managed</p>
+                </div>
+            </div>
+
+            <p class="text-gray-800 text-[10px] uppercase tracking-[0.5em] font-bold pt-12 border-t border-white/5">
+                EST 2021 &copy; CRACKMYSOCIAL. THE FASTEST RECOVERY AGENCY. ALL RIGHTS RESERVED.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>
+
