@@ -1,187 +1,201 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0">
-    <title>Crack My Social - Convert Influence into Revenue</title>
-    <!-- Load Tailwind CSS for utility-first styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Inter font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-    
-    <style>
-        /* Base Dark Theme Styling */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0d1117; /* Very Dark Background (GitHub Dark) */
-            color: #c9d1d9; /* Light gray text */
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            padding: 0;
-            margin: 0;
-            padding-top: 64px; /* Space for the fixed header */
-        }
-        .main-container {
-            max-width: 768px; /* Mobile-first design: suitable for modern content */
-            width: 95%;
-            margin: 0 auto;
-            padding-bottom: 50px;
-        }
-        .card {
-            background-color: #161b22; /* Slightly lighter dark background for cards */
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(255, 71, 87, 0.1); /* Subtle red shadow on hover */
-        }
-        .card-header-red {
-            color: #ff4757; /* Bright Red Accent */
-            font-weight: 700;
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-        }
-        .step-heading {
-            color: #ff4757;
-            font-size: 1.875rem; /* text-3xl */
-            font-weight: 800; /* font-extrabold */
-            margin-bottom: 8px;
-        }
-        
-        /* Utility for highlighting text */
-        .highlight-bold strong {
-            color: #ff4757; /* Red highlights */
-        }
-    </style>
-</head>
-<body>
+export default function Home() {
+  return (
+    <main style={styles.main}>
+      {/* NAV */}
+      <nav style={styles.nav}>
+        <img src="/logo.png" alt="CrackMySocial" style={styles.logo} />
+      </nav>
 
-    <!-- FIXED NAVIGATION HEADER -->
-    <header class="fixed top-0 left-0 w-full bg-[#161b22] border-b border-red-700/50 z-10 shadow-lg">
-        <div class="main-container flex justify-between items-center py-4 px-5">
-            <!-- Logo/Branding Placeholder -->
-            <div class="flex items-center space-x-2">
-                <span class="text-2xl" role="img" aria-label="Fire icon">🔥</span>
-                <span class="text-xl font-bold text-white">Crack My Social</span>
-            </div>
-            <!-- Navigation/CTA -->
-            <nav>
-                <a href="#contact-section" 
-                   class="py-2 px-4 rounded-full text-white font-semibold bg-red-700 hover:bg-red-600 transition duration-300 text-sm">
-                    Get Started
-                </a>
-            </nav>
+      {/* HERO */}
+      <section style={styles.hero}>
+        <h1 style={styles.h1}>
+          Instagram Account Recovery & Shadowban Resolution
+        </h1>
+        <p style={styles.sub}>
+          Professional, priority-based solutions for creators, brands, and businesses.
+          One case at a time. No shortcuts.
+        </p>
+        <a href="#contact" style={styles.cta}>
+          Request Evaluation
+        </a>
+      </section>
+
+      {/* TRUST STRIP */}
+      <section style={styles.trust}>
+        <p>• Discreet • Secure • Priority Handling •</p>
+      </section>
+
+      {/* SERVICES */}
+      <section style={styles.section}>
+        <h2 style={styles.h2}>What We Do</h2>
+        <div style={styles.cards}>
+          <div style={styles.card}>
+            <h3>Account Recovery</h3>
+            <p>
+              Restoring disabled, suspended, or locked Instagram accounts using
+              compliant escalation processes.
+            </p>
+          </div>
+          <div style={styles.card}>
+            <h3>Shadowban Resolution</h3>
+            <p>
+              Diagnosing visibility restrictions and restoring reach through
+              professional remediation.
+            </p>
+          </div>
+          <div style={styles.card}>
+            <h3>Username Claims</h3>
+            <p>
+              Strategic handling of username and handle-related recovery cases.
+            </p>
+          </div>
         </div>
-    </header>
+      </section>
 
-    <div class="main-container">
-        
-        <!-- 1. HERO SECTION -->
-        <section class="text-center mb-16 pt-8">
-            <p class="text-red-500 font-semibold mb-2 uppercase tracking-widest text-sm">The High-Ticket Closer</p>
-            <h1 class="text-4xl sm:text-6xl font-extrabold text-white leading-tight mb-4">
-                I Convert Your Influence into <span class="text-red-600">Verifiable Revenue.</span>
-            </h1>
-            <p class="text-gray-400 text-lg mb-8">Social Media Services & High-Ticket Sales Strategist, Est. 2021</p>
-            
-            <p class="text-gray-300 text-xl mb-10 max-w-md mx-auto highlight-bold">
-                My work is driven by **unmatched passion** and a commitment to measurable results, leveraging deep social media expertise to scale your high-ticket offers.
-            </p>
-            
-            <a href="#contact-section" 
-               class="inline-block py-4 px-10 rounded-xl text-white font-bold text-xl bg-red-700 hover:bg-red-600 transition duration-300 shadow-2xl shadow-red-900/60 transform hover:scale-[1.05] active:scale-100">
-                Start Scaling Your Revenue Now
-            </a>
-        </section>
+      {/* PROCESS */}
+      <section style={styles.sectionAlt}>
+        <h2 style={styles.h2}>Our Approach</h2>
+        <ol style={styles.list}>
+          <li>Private evaluation of your case</li>
+          <li>Priority handling with clear timelines</li>
+          <li>Resolution or clear next steps</li>
+        </ol>
+        <p style={styles.note}>
+          We do not mass-handle requests. Each case is handled individually.
+        </p>
+      </section>
 
-        <!-- 2. INTEGRITY FIRST (Credibility Signal) -->
-        <section class="mb-16">
-            <h2 class="text-3xl font-bold text-white text-center mb-8">Integrity First: Why We Work</h2>
-            <div class="card highlight-bold text-gray-300 border-l-4 border-red-600">
-                <h3 class="card-header-red mt-0">The Foundation of Trust</h3>
-                <p class="mb-4">
-                    Our philosophy is simple: **the quality of the work always comes first, not the money.** We are driven by a genuine passion for seeing your brand succeed. This dedication to integrity is the bedrock of every client relationship, ensuring we deliver maximum value every single time.
-                </p>
-                <h3 class="card-header-red mt-6">Specialized Foundational Support</h3>
-                <p>
-                    Beyond high-level sales strategy, we provide crucial foundational **social media services**. This includes specialized support like **Instagram account recovery** and troubleshooting any platform-related issues. We strive to offer these essential services at the **best prices** available, ensuring your core digital assets are secure and functional, enabling you to focus on growth.
-                </p>
-            </div>
-        </section>
+      {/* CONTACT */}
+      <section id="contact" style={styles.section}>
+        <h2 style={styles.h2}>Request Access Review</h2>
+        <p style={styles.subSmall}>
+          Serious inquiries only. Responses within 24 hours.
+        </p>
 
-        <!-- 3. RESULTS-DRIVEN 3-STEP SYSTEM -->
-        <section class="mb-16">
-            <h2 class="text-3xl font-bold text-white text-center mb-8">My Results-Driven 3-Step System</h2>
-            
-            <div class="space-y-8">
-                
-                <!-- STEP 1 -->
-                <div class="card border-l-4 border-red-600">
-                    <h3 class="step-heading">1. Deep Discovery</h3>
-                    <p class="text-white text-lg font-semibold mb-2">Uncovering the Cost of Inaction</p>
-                    <p class="text-gray-300 highlight-bold">
-                        We spend 80% of the call listening. I ask high-leverage questions to identify the true pain point and the emotional cost of *not* buying, creating massive urgency.
-                    </p>
-                </div>
-                
-                <!-- STEP 2 -->
-                <div class="card border-l-4 border-red-600">
-                    <h3 class="step-heading">2. Masterful Reframe</h3>
-                    <p class="text-white text-lg font-semibold mb-2">Objection Handling as Consultation</p>
-                    <p class="text-gray-300 highlight-bold">
-                        Price, time, or partner objections are handled not as conflicts, but as invitations to re-align the prospect's desire with the massive value of the offer. No pressure, just clarity.
-                    </p>
-                </div>
+        <a
+          href="mailto:crackmysocial@gmail.com"
+          style={styles.ctaAlt}
+        >
+          Contact via Email
+        </a>
+      </section>
 
-                <!-- STEP 3 -->
-                <div class="card border-l-4 border-red-600">
-                    <h3 class="step-heading">3. Commitment Close</h3>
-                    <p class="text-white text-lg font-semibold mb-2">Permission-Based, Confident Action</p>
-                    <p class="text-gray-300 highlight-bold">
-                        I guide the prospect to an empowered decision. The close is a natural conclusion of the value established, ensuring high client retention and low refund rates.
-                    </p>
-                </div>
-            </div>
-        </section>
+      {/* FOOTER */}
+      <footer style={styles.footer}>
+        <p>©️ {new Date().getFullYear()} CrackMySocial</p>
+        <p style={styles.footerSmall}>
+          Independent digital services. Not affiliated with Meta.
+        </p>
+      </footer>
+    </main>
+  );
+}
 
-        <!-- 4. READY TO SCALE YOUR REVENUE SECTION (CONTACT) -->
-        <section id="contact-section">
-            <div class="card bg-gray-900 border border-red-700/50 text-center p-12">
-                <h2 class="text-3xl font-bold text-white mb-4">Ready to Scale Your Revenue?</h2>
-                <p class="text-gray-300 mb-8 text-lg">
-                    I only partner with clients who have qualified leads and a proven high-ticket offer. Let's start with an introductory conversation.
-                </p>
-                
-                <p class="text-2xl font-extrabold text-white mt-8">Owais Quraishi</p>
-                <p class="text-red-500 text-xl font-semibold mb-8">Crackmysocial@gmail.com</p>
-
-                <a href="mailto:Crackmysocial@gmail.com"
-                   class="inline-block w-full py-4 px-4 rounded-xl text-white font-semibold bg-red-700 hover:bg-red-800 transition duration-200 shadow-xl shadow-red-900/40 transform hover:scale-[1.01] max-w-sm">
-                    Email Me To Start The Conversation
-                </a>
-                
-                <p class="text-gray-500 text-sm mt-4">
-                    I'll respond within 24 hours with a questionnaire.
-                </p>
-            </div>
-        </section>
-
-        <!-- 5. FOOTER (Professionalism) -->
-        <footer class="text-center mt-12 pt-6 border-t border-gray-800">
-            <p class="text-gray-500 text-sm">
-                &copy; 2024 Crack My Social. All rights reserved.
-            </p>
-            <p class="text-gray-600 text-xs mt-1">
-                Influence | Revenue | Integrity
-            </p>
-        </footer>
-
-    </div>
-
-</body>
-</html>
-
+const styles: any = {
+  main: {
+    backgroundColor: "#0b0b0f",
+    color: "#e5e7eb",
+    fontFamily: "Inter, sans-serif",
+    minHeight: "100vh",
+  },
+  nav: {
+    padding: "24px 32px",
+  },
+  logo: {
+    height: "38px",
+  },
+  hero: {
+    padding: "120px 32px 80px",
+    maxWidth: "900px",
+    margin: "0 auto",
+    textAlign: "center",
+  },
+  h1: {
+    fontSize: "42px",
+    fontWeight: 700,
+    lineHeight: 1.2,
+  },
+  sub: {
+    marginTop: "20px",
+    fontSize: "18px",
+    color: "#9ca3af",
+  },
+  cta: {
+    display: "inline-block",
+    marginTop: "36px",
+    padding: "14px 28px",
+    backgroundColor: "#ffffff",
+    color: "#000",
+    borderRadius: "8px",
+    textDecoration: "none",
+    fontWeight: 600,
+  },
+  trust: {
+    textAlign: "center",
+    padding: "16px",
+    color: "#6b7280",
+    fontSize: "14px",
+  },
+  section: {
+    padding: "96px 32px",
+    maxWidth: "1000px",
+    margin: "0 auto",
+  },
+  sectionAlt: {
+    padding: "96px 32px",
+    backgroundColor: "#111118",
+  },
+  h2: {
+    fontSize: "32px",
+    fontWeight: 600,
+    marginBottom: "40px",
+    textAlign: "center",
+  },
+  cards: {
+    display: "grid",
+    gap: "24px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+  },
+  card: {
+    backgroundColor: "#0f0f15",
+    padding: "28px",
+    borderRadius: "12px",
+    border: "1px solid #1f2933",
+  },
+  list: {
+    maxWidth: "520px",
+    margin: "0 auto",
+    fontSize: "18px",
+    lineHeight: 1.8,
+  },
+  note: {
+    marginTop: "28px",
+    textAlign: "center",
+    color: "#9ca3af",
+  },
+  subSmall: {
+    textAlign: "center",
+    color: "#9ca3af",
+    marginBottom: "24px",
+  },
+  ctaAlt: {
+    display: "block",
+    width: "fit-content",
+    margin: "0 auto",
+    padding: "14px 28px",
+    border: "1px solid #374151",
+    borderRadius: "8px",
+    color: "#e5e7eb",
+    textDecoration: "none",
+  },
+  footer: {
+    padding: "40px 32px",
+    textAlign: "center",
+    color: "#6b7280",
+    fontSize: "14px",
+  },
+  footerSmall: {
+    marginTop: "6px",
+    fontSize: "12px",
+  },
+};
